@@ -1,0 +1,40 @@
+IMAGE
+Bidimensional function of intensity of light f(x,y)
+    x and y are spation coordinates
+    f(x,y) is the intensity of color in a given coordinate
+    In the real world, amplitude and coordinate are continuous
+    In the discrete realm, both are discrete
+
+Image Generation Pipeline
+    Camera Body
+    - Optics: Lenses
+    - Aperture: Amount of light that goes through
+    - Shutter: Time of exposure
+
+    Sensor Chip
+    - Sensor
+        CCD
+        - Light is captured by the lens system
+        - Charge is converted into voltage, that goes to the ADC
+        - The amplification process is serial
+        - All the sensors are exposed at the same time, but takes longer
+        CMOS
+        - Photons affect the conductivity of each cell
+        - The sensor exposes one row at a time
+        - Amplification is parallel, by row
+    - Gain: Sensitiviness to light
+    - ADC
+
+    DSP (Digital Signal Processing)
+    - Demosaic and Sharpening
+    - White balance
+    - Gamma / curve
+    - Compression
+
+
+SAMPLING AND RESOLUTION
+The size of the sensor defines most of the image quality
+
+
+
+
