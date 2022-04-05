@@ -4,39 +4,48 @@ import matplotlib.pyplot as plt
 import random
 
 
-def transform_image(operation, q=None):
+def get_transformation_function(operation):
+    if operation == 1:
+        def get_value(x, y):
+            return x * y + 2 * y
+
+    elif operation == 2:
+        def get_value(x, y):
+            return np.abs(np.cos(x / q) + 2 * np.sin(y / q))
+
+    elif operation == 3:
+        def get_value(x, y):
+            return np.abs(3 * (x / q) - np.cbrt(y / q))
+
+    elif operation == 4:
+        def get_value(x, y):
+            random.random()
+
+    return get_value if get_value else None
+
+
+def generate_custom_image(operation):
     transformed_image = np.zeros((scene_size, scene_size), float)
     random.seed(random_seed)
     print(transformed_image)
-    if operation == 1:
-        for row in range(transformed_image.shape[0]):
-            for col in range(transformed_image.shape[1]):
-                transformed_image[row, col] = row * col + 2 * col
 
-    elif operation == 2:
-        for row in range(transformed_image.shape[0]):
-            for col in range(transformed_image.shape[1]):
-                transformed_image[row, col] = np.abs(np.cos(row / q) + 2 * np.sin(col / q))
+    operation_function = get_transformation_function(operation)
 
-    elif operation == 3:
-        for row in range(transformed_image.shape[0]):
-            for col in range(transformed_image.shape[1]):
-                transformed_image[row, col] = np.abs(3 * row / q - np.cbrt(row / q))
+    for x in range(0, transformed_image.shape[0]):
+        for y in range(0, transformed_image.shape[1]):
+            transformed_image[x, y] = operation_function(x, y)
 
-    elif operation == 4:
-        for row in range(transformed_image.shape[0]):
-            for col in range(transformed_image.shape[1]):
-                transformed_image[row, col] = random.random()
-
+    plt.plot(transformed_image)
+    plt.show()
     return transformed_image
 
 
 def root_squared_error(image1, image2):
+    # Calculate root squared error between two images
     error = 0
     for row in range(image1.shape[0]):
         for col in range(image1.shape[1]):
             error += (image2[row, col] - image1[row, col]) ** 2
-
     return np.sqrt(error)
 
 
@@ -50,6 +59,9 @@ if __name__ == "__main__":
     bits_per_pixel = int(input())
     random_seed = int(input())
 
-    transform_image(function, q)
+    # Generate image based on input function
+    generate_custom_image(function)
 
+    # Open original image
     original_image = np.load(filename)
+
