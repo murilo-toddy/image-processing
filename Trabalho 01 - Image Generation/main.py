@@ -20,10 +20,13 @@ def get_transformation_function(operation):
     return get_value
 
 
+# Generate image based on user input
 def generate_custom_image(operation):
+    # Create image matrix and initialize random number generator with given seed
     generated_image = np.zeros((scene_size, scene_size), float)
     random.seed(random_seed)
 
+    # No randomwalk function, get mathematic operation to perform
     if operation != 5:
         operation_function = get_transformation_function(operation)
         for x in range(scene_size):
@@ -35,17 +38,20 @@ def generate_custom_image(operation):
         # Perform randomwalk operation
         x, y = 0, 0
         generated_image[x, y] = 1
-        for _ in range(1 + scene_size ** 2):
+        for _ in range(1 + scene_size * scene_size):
             # Find walking direcion
             dx = random.randint(-1, 1)
             dy = random.randint(-1, 1)
             x = (x + dx) % scene_size
             y = (y + dy) % scene_size
+
+            # Update corresponding cell
             generated_image[x, y] = 1
 
     return generated_image
 
 
+# Normalize image values to 16 bits format
 def normalize_image(image):
     max_value = np.max(image)
     min_value = np.min(image)
@@ -53,12 +59,14 @@ def normalize_image(image):
     return image.astype(np.uint16)
 
 
+# Quantize image to reduce matrix size
 def quantize_image(image):
     quantized_image = np.zeros((image_size, image_size), np.uint8)
     step_size = int(np.floor(scene_size / image_size))
-    correction_factor = (2 ** 8 - 1) / (2 ** 16 - 1)
+    correction_factor = (2 ** 8 - 1) / (2 ** 16 - 1)  # Correction factor to transform from 16 to 8 bits
     for x in range(image_size):
         for y in range(image_size):
+            # Update matrix value and perform bit shift for amplitude quantization
             quantized_image[x, y] = correction_factor * image[x * step_size, y * step_size]
             quantized_image[x, y] = quantized_image[x, y] >> (8 - bits_per_pixel)
 
@@ -67,21 +75,11 @@ def quantize_image(image):
 
 def root_squared_error(image1, image2):
     # Calculate root squared error between two images
-    error_image = np.zeros((image_size, image_size))
     error = 0.0
-    for row in range(image1.shape[0]):
-        for col in range(image1.shape[1]):
-            # if image1[row, col] >= 255 or image2[row, col] >= 255:
-                # print(row, col, image1[row, col], image2[row, col])
-            greater = max(image1[row, col], image2[row, col])
-            smaller = min(image1[row, col], image2[row, col])
-            error += (greater - smaller) ** 2
-            error_image[row, col] = (greater - smaller) ** 2
-            if error_image[row, col] != 0:
-                print(row, col, error_image[row, col], image1[row, col], image2[row, col])
-            
-    # plt.imshow(error_image, cmap="gray")
-    # plt.show()
+    for x in range(image1.shape[0]):
+        for y in range(image1.shape[1]):
+            error += (int(image1[x, y]) - int(image2[x, y])) ** 2
+
     return np.sqrt(error)
 
 
@@ -98,17 +96,12 @@ if __name__ == "__main__":
     # Generate image based on input function
     generated_image = generate_custom_image(function)
 
+    # Normalize and quantize image size and amplitude
     normalized_image = normalize_image(generated_image)
     quantized_image = quantize_image(normalized_image)
 
-    plt.subplot(211); plt.imshow(quantized_image, cmap="gray")
-
     # Open original image
     original_image = np.load(filename)
-    plt.subplot(212); plt.imshow(original_image, cmap="gray")
 
     difference_image = quantized_image - original_image
-    # plt.imshow(difference_image, cmap="gray")
-
-    plt.show()
     print(round(root_squared_error(quantized_image, original_image), 4))
