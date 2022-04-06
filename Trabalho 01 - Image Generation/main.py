@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import random
 
 
@@ -102,6 +101,4 @@ if __name__ == "__main__":
 
     # Open original image
     original_image = np.load(filename)
-
-    difference_image = quantized_image - original_image
     print(round(root_squared_error(quantized_image, original_image), 4))
