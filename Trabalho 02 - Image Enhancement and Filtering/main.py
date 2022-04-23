@@ -25,7 +25,7 @@ def find_optimal_treshold(image, initial_treshold):
 def limiarization(image):
     initial_treshold = int(input())
     treshold = find_optimal_treshold(image, initial_treshold)
-    generated_image = np.zeros((image.shape, image[0].shape), float)
+    generated_image = np.zeros((image.shape, image[0].shape), np.uint8)
     for x in range(image.shape):
         for y in range(image[0].shape):
             generated_image[x, y] = 1 if image[x, y] > treshold else 0
@@ -67,3 +67,5 @@ if __name__ == "__main__":
         generated_image = filtering_2d(original_image)
     elif method == 4:
         generated_image = median_filter(original_image)
+
+    print(round(rmse(original_image, generated_image), 4))
