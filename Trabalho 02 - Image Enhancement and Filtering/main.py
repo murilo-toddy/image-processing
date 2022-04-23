@@ -32,29 +32,49 @@ def limiarization(image):
     return generated_image
 
 
-def filtering_1d(image):
-    weights = input().rstrip().split(" ")
-    n = len(weights)
-    image_array = []
-    for x in range(image.shape):
-        for y in range(image[0].shape):
-            image_array.append(image[x, y])
+def matrix_to_array(matrix):
+    array = []
+    for x in range(matrix.shape):
+        for y in range(matrix[0].shape):
+            array.append(matrix[x, y])
+    return array
 
-    index = 0
+
+def array_to_matrix(array, m, n):
+    matrix = np.zeros((m, n), np.uint8)
+    for x in range(m):
+        for y in range(n):
+            matrix[x, y] = array[x + y * n]
+    return matrix
+
+
+def filtering_1d(image):
+    n = int(input())
+    weights = input().rstrip().split(" ")
+    image_array = matrix_to_array(image)
     output_array = []
     out_size = len(image_array)
+
+    index = 0
     for i in range(n):
         output_array[(index + n / 2) % out_size] += weights[i] * image_array[(index + i) % out_size]
+    return array_to_matrix(output_array, image.shape, image[0].shape)
 
-    generated_image = np.zeros((image.shape, image[0].shape), np.uint8)
-    for x in range(image.shape):
-        for y in range(image[0].shape):
-            generated_image[x, y] = output_array[x + y * image[0].shape]
-    return generated_image
+
+def get_weights_matrix_from_user(n):
+    weights = np.zeros((n, n), np.uint8)
+    for x in range(n):
+        row = input().rstrip().split(" ")
+        for y in range(n):
+            weights[x, y] = row[y]
+    return weights
 
 
 def filtering_2d(image):
-    pass
+    n = int(input())
+    weights = get_weights_matrix_from_user(n)
+    x_index = 0
+    y_index = 0
 
 
 def median_filter(image):
