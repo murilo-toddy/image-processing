@@ -33,7 +33,24 @@ def limiarization(image):
 
 
 def filtering_1d(image):
-    pass
+    weights = input().rstrip().split(" ")
+    n = len(weights)
+    image_array = []
+    for x in range(image.shape):
+        for y in range(image[0].shape):
+            image_array.append(image[x, y])
+
+    index = 0
+    output_array = []
+    out_size = len(image_array)
+    for i in range(n):
+        output_array[(index + n / 2) % out_size] += weights[i] * image_array[(index + i) % out_size]
+
+    generated_image = np.zeros((image.shape, image[0].shape), np.uint8)
+    for x in range(image.shape):
+        for y in range(image[0].shape):
+            generated_image[x, y] = output_array[x + y * image[0].shape]
+    return generated_image
 
 
 def filtering_2d(image):
