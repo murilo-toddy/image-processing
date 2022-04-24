@@ -82,22 +82,50 @@ def get_weights_matrix_from_user(n):
     return weights
 
 
-def filtering_2d(image):
-    n = int(input())
-    weights = get_weights_matrix_from_user(n)
-    x_index = 0
-    y_index = 0
-
-
+# Create a copy of the original image padded with zeros
 def create_matrix_zero_padded(image, rows_to_add):
     scaled_image = create_matrix(image.shape[0] + 2 * rows_to_add, image.shape[1] + 2 * rows_to_add)
     for x in range(image.shape[0] + rows_to_add + 1):
         for y in range(image.shape[1] + rows_to_add + 1):
+            # Value equals original image if it's not in a border
             scaled_image[x, y] = image[x-rows_to_add, y-rows_to_add] \
                 if x in range(rows_to_add, image.shape[0] + rows_to_add) \
                 and y in range(rows_to_add, image.shape[1] + rows_to_add) \
                 else 0
     return scaled_image
+
+
+def create_symmetric_matrix(image, rows_to_add):
+    symmetric_matrix = create_matrix_zero_padded(image, rows_to_add)
+    for row in range(rows_to_add - 1, -1, -1):
+        for y in range(row, image.shape[1] + rows_to_add + 1):
+            symmetric_matrix[row, y] = symmetric_matrix[row+1, y]
+            symmetric_matrix[image.shape[0] - row + 1, y] = symmetric_matrix[image.shape[0] - row, y]
+
+    for col in range(rows_to_add - 1, -1, -1):
+        for x in range(col, image.shape[0] + rows_to_add + 1):
+            symmetric_matrix[x, col] = symmetric_matrix[x, col+1]
+            symmetric_matrix[x, image.shape[1] - col + 1] = symmetric_matrix[x, image.shape[1] - col]
+
+    return symmetric_matrix
+
+
+def filtering_2d(image):
+    n = int(input())
+    weights = get_weights_matrix_from_user(n)
+    rows_to_add = n // 2
+    symmetric_matrix = create_symmetric_matrix(image, rows_to_add)
+    generated_image = create_matrix(image.shape[0], image.shape[1])
+
+    for x in range(rows_to_add, image.shape[0] + rows_to_add):
+        for y in range(rows_to_add, image.shape[1] + rows_to_add):
+            value = 0
+            for dx in range(-rows_to_add, rows_to_add + 1):
+                for dy in range(-rows_to_add, rows_to_add + 1):
+                    value += weights[dx + rows_to_add, dy + rows_to_add] * int(symmetric_matrix[x + dx, y + dy])
+            generated_image[x - rows_to_add, y - rows_to_add] = value
+
+    return generated_image
 
 
 def median_filter(image):
@@ -141,5 +169,3 @@ if __name__ == "__main__":
         generated_image = median_filter(original_image)
 
     print(round(rmse(original_image, generated_image), 4))
-    plt.imshow(generated_image, cmap="gray")
-    plt.show()
