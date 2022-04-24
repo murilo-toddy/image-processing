@@ -89,9 +89,7 @@ def filtering_2d(image):
     y_index = 0
 
 
-def median_filter(image):
-    n = int(input())
-    rows_to_add = n // 2
+def create_matrix_zero_padded(image, rows_to_add):
     scaled_image = create_matrix(image.shape[0] + 2 * rows_to_add, image.shape[1] + 2 * rows_to_add)
     for x in range(image.shape[0] + rows_to_add + 1):
         for y in range(image.shape[1] + rows_to_add + 1):
@@ -99,7 +97,13 @@ def median_filter(image):
                 if x in range(rows_to_add, image.shape[0] + rows_to_add) \
                 and y in range(rows_to_add, image.shape[1] + rows_to_add) \
                 else 0
+    return scaled_image
 
+
+def median_filter(image):
+    n = int(input())
+    rows_to_add = n // 2
+    scaled_image = create_matrix_zero_padded(image, rows_to_add)
     generated_image = create_matrix(image.shape[0], image.shape[1])
     for x in range(rows_to_add, image.shape[0] + rows_to_add):
         for y in range(rows_to_add, image.shape[1] + rows_to_add):
