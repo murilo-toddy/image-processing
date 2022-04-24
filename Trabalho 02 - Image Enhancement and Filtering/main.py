@@ -1,8 +1,15 @@
+# Name:   Murilo Fantucci Todão
+# NUSP:   11299982
+# Course: SCC0251
+# Year:   2022
+# Title:  Assignment 2 - Image Enhancement and Filtering
+
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 
 
+# Create a numpy array using uint8 format
 def create_matrix(m, n):
     return np.zeros((m, n), np.uint8)
 
@@ -83,14 +90,31 @@ def filtering_2d(image):
 
 
 def median_filter(image):
-    pass
+    n = int(input())
+    rows_to_add = n // 2
+    scaled_image = create_matrix(image.shape[0] + 2 * rows_to_add, image.shape[1] + 2 * rows_to_add)
+    for x in range(image.shape[0] + rows_to_add + 1):
+        for y in range(image.shape[1] + rows_to_add + 1):
+            scaled_image[x, y] = image[x-rows_to_add, y-rows_to_add] \
+                if x in range(rows_to_add, image.shape[0] + rows_to_add) \
+                and y in range(rows_to_add, image.shape[1] + rows_to_add) \
+                else 0
+
+    generated_image = create_matrix(image.shape[0], image.shape[1])
+    for x in range(rows_to_add, image.shape[0] + rows_to_add):
+        for y in range(rows_to_add, image.shape[1] + rows_to_add):
+            window = scaled_image[x-rows_to_add:x+rows_to_add+1, y-rows_to_add:y+rows_to_add+1]
+            vectorized_window = matrix_to_array(window)
+            generated_image[x-rows_to_add, y-rows_to_add] = np.median(vectorized_window)
+
+    return generated_image
 
 
 def rmse(image1, image2):
     error = 0
     for x in range(image1.shape[0]):
         for y in range(image1.shape[1]):
-            error += (image1[x, y] - image2[x, y]) ** 2
+            error += (int(image1[x, y]) - int(image2[x, y])) ** 2
     return np.sqrt(error / image1.shape[0] / image1.shape[1])
 
 
@@ -99,8 +123,10 @@ if __name__ == "__main__":
     filename = str(input()).rstrip()
     method = int(input())
 
+    # Open image as numpy array
     original_image = imageio.imread(filename)
 
+    # Call for specific function based on user input
     if method == 1:
         generated_image = limiarization(original_image)
     elif method == 2:
