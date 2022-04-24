@@ -1,5 +1,10 @@
 import imageio
 import numpy as np
+import matplotlib.pyplot as plt
+
+
+def create_matrix(m, n):
+    return np.zeros((m, n), np.uint8)
 
 
 def find_optimal_treshold(image, initial_treshold):
@@ -8,8 +13,8 @@ def find_optimal_treshold(image, initial_treshold):
     while ti - tj > 0.5:
         g1 = []
         g2 = []
-        for x in range(image.shape):
-            for y in range(image[0].shape):
+        for x in range(image.shape[0]):
+            for y in range(image.shape[1]):
                 if image[x, y] > ti:
                     g1.append(image[x, y])
                 else:
@@ -25,23 +30,23 @@ def find_optimal_treshold(image, initial_treshold):
 def limiarization(image):
     initial_treshold = int(input())
     treshold = find_optimal_treshold(image, initial_treshold)
-    generated_image = np.zeros((image.shape, image[0].shape), np.uint8)
-    for x in range(image.shape):
-        for y in range(image[0].shape):
+    generated_image = create_matrix(image.shape[0], image.shape[1])
+    for x in range(image.shape[0]):
+        for y in range(image.shape[1]):
             generated_image[x, y] = 1 if image[x, y] > treshold else 0
     return generated_image
 
 
 def matrix_to_array(matrix):
     array = []
-    for x in range(matrix.shape):
-        for y in range(matrix[0].shape):
+    for x in range(matrix.shape[0]):
+        for y in range(matrix.shape[1]):
             array.append(matrix[x, y])
     return array
 
 
 def array_to_matrix(array, m, n):
-    matrix = np.zeros((m, n), np.uint8)
+    matrix = create_matrix(m, n)
     for x in range(m):
         for y in range(n):
             matrix[x, y] = array[x + y * n]
@@ -83,10 +88,10 @@ def median_filter(image):
 
 def rmse(image1, image2):
     error = 0
-    for x in range(image1.shape):
-        for y in range(image1[0].shape):
+    for x in range(image1.shape[0]):
+        for y in range(image1.shape[1]):
             error += (image1[x, y] - image2[x, y]) ** 2
-    return np.sqrt(error / image1.shape / image1[0].shape)
+    return np.sqrt(error / image1.shape[0] / image1.shape[1])
 
 
 if __name__ == "__main__":
@@ -94,7 +99,7 @@ if __name__ == "__main__":
     filename = str(input()).rstrip()
     method = int(input())
 
-    original_image = np.load(filename)
+    original_image = imageio.imread(filename)
 
     if method == 1:
         generated_image = limiarization(original_image)
@@ -106,3 +111,5 @@ if __name__ == "__main__":
         generated_image = median_filter(original_image)
 
     print(round(rmse(original_image, generated_image), 4))
+    plt.imshow(generated_image, cmap="gray")
+    plt.show()
