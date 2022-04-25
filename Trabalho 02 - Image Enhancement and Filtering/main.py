@@ -6,6 +6,7 @@
 
 import imageio
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Create a numpy array using uint8 format
@@ -121,10 +122,11 @@ def filtering_1d(image):
     output_array = []
     out_size = len(image_array)
 
+    # NEEDS FIXING
     index = 0
     # Calculate weighted sum for each element in the list
     for i in range(n):
-        output_array[(index + n / 2) % out_size] += weights[i] * image_array[(index + i) % out_size]
+        output_array[(index + n // 2) % out_size] += weights[i] * image_array[(index + i) % out_size]
 
     # Return matrix conversion of calculated list
     return array_to_matrix(output_array, image.shape, image[0].shape)
@@ -156,6 +158,7 @@ def filtering_2d(image):
 
 
 # Apply median filter algorithm to an image
+# TIMEOUT
 def median_filter(image):
     n = int(input())
 
@@ -204,3 +207,6 @@ if __name__ == "__main__":
 
     # Calculate error and print rounded to 4 decimal places
     print(round(rmse(original_image, generated_image), 4))
+    plt.subplot(121); plt.imshow(original_image, cmap="gray")
+    plt.subplot(122); plt.imshow(generated_image, cmap="gray")
+    plt.show()
