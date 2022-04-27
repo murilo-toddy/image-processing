@@ -116,16 +116,18 @@ def filtering_1d(image):
     # Read weights list from user
     weights = [int(i) for i in input().rstrip().split(" ")]
 
-    # Convert matrix to array
+    # Convert matrix to array and create output array to store results
     image_array = matrix_to_array(image)
-    output_araray = np.zeros((image.shape[0] * image.shape[1], 1), np.uint8)
+    output_araray = np.zeros((image.shape[0] * image.shape[1], 1), int)
 
+    # Loop through image and process each index value based on weights list
     for i in range(len(image_array)):
         result = 0
         for j in range(-n // 2, n // 2):
             result += image_array[(i + j) % len(image_array)] * weights[j]
         output_araray[i] = result
 
+    # Convert array back to matrix with specified size and return it
     return array_to_matrix(output_araray, image.shape[0], image.shape[1])
 
 
