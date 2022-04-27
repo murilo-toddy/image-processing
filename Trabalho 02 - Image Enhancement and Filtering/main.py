@@ -13,11 +13,6 @@ def create_matrix(m, n):
     return np.zeros((m, n), np.uint8)
 
 
-# Create a numpy array using float format
-def create_float_matrix(m, n):
-    return np.zeros((m, n), float)
-
-
 # Find optimal treshold for Limiarization algorithm based on specified conditions
 def find_optimal_treshold(image, initial_treshold):
     ti = initial_treshold
