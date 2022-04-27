@@ -6,7 +6,6 @@
 
 import imageio
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 # Create a numpy array using uint8 format
@@ -120,21 +119,19 @@ def limiarization(image):
 def filtering_1d(image):
     n = int(input())
     # Read weights list from user
-    weights = input().rstrip().split(" ")
+    weights = [int(i) for i in input().rstrip().split(" ")]
 
     # Convert matrix to array
     image_array = matrix_to_array(image)
-    output_array = []
-    out_size = len(image_array)
+    output_araray = np.zeros((image.shape[0] * image.shape[1], 1), np.uint8)
 
-    # NEEDS FIXING
-    index = 0
-    # Calculate weighted sum for each element in the list
-    for i in range(n):
-        output_array[(index + n // 2) % out_size] += weights[i] * image_array[(index + i) % out_size]
+    for i in range(len(image_array)):
+        result = 0
+        for j in range(-n // 2, n // 2):
+            result += image_array[(i + j) % len(image_array)] * weights[j]
+        output_araray[i] = result
 
-    # Return matrix conversion of calculated list
-    return array_to_matrix(output_array, image.shape, image[0].shape)
+    return array_to_matrix(output_araray, image.shape[0], image.shape[1])
 
 
 # Apply 2D filtering algorithm to an image
@@ -191,12 +188,12 @@ def rmse(image1, image2):
     return np.sqrt(error / image1.shape[0] / image1.shape[1])
 
 
-# def post_processing_normalization(image):
-#     image = image / (2 ** 8 - 1)
-#     max_value = np.max(image)
-#     min_value = np.min(image)
-#     image = (2 ** 8 - 1) * ((image - min_value) / (max_value - min_value))
-#     return image.astype(np.uint8)
+def post_processing_normalization(image):
+    image = image / (2 ** 8 - 1)
+    max_value = np.max(image)
+    min_value = np.min(image)
+    image = (2 ** 8 - 1) * ((image - min_value) / (max_value - min_value))
+    return image.astype(np.uint8)
 
 
 if __name__ == "__main__":
@@ -218,10 +215,7 @@ if __name__ == "__main__":
         generated_image = median_filter(original_image)
 
     # Normalizes matrix
-    # generated_image = post_processing_normalization(generated_image)
+    generated_image = post_processing_normalization(generated_image)
 
     # Calculate error and print rounded to 4 decimal places
     print(round(rmse(original_image, generated_image), 4))
-    plt.subplot(121); plt.imshow(original_image, cmap="gray")
-    plt.subplot(122); plt.imshow(generated_image, cmap="gray")
-    plt.show()
