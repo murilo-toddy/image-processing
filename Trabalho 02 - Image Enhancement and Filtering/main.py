@@ -14,6 +14,11 @@ def create_matrix(m, n):
     return np.zeros((m, n), np.uint8)
 
 
+# Create a numpy array using float format
+def create_float_matrix(m, n):
+    return np.zeros((m, n), float)
+
+
 # Find optimal treshold for Limiarization algorithm based on specified conditions
 def find_optimal_treshold(image, initial_treshold):
     ti = initial_treshold
@@ -158,7 +163,6 @@ def filtering_2d(image):
 
 
 # Apply median filter algorithm to an image
-# TIMEOUT
 def median_filter(image):
     n = int(input())
 
@@ -173,7 +177,7 @@ def median_filter(image):
             window = scaled_image[x - rows_to_add:x + rows_to_add + 1, y - rows_to_add:y + rows_to_add + 1]
             vectorized_window = matrix_to_array(window)
             vectorized_window.sort()
-            median_filtered_image[x - rows_to_add, y - rows_to_add] = np.median(vectorized_window)
+            median_filtered_image[x - rows_to_add, y - rows_to_add] = vectorized_window[n // 2]
 
     return median_filtered_image
 
@@ -185,6 +189,14 @@ def rmse(image1, image2):
         for y in range(image1.shape[1]):
             error += (int(image1[x, y]) - int(image2[x, y])) ** 2
     return np.sqrt(error / image1.shape[0] / image1.shape[1])
+
+
+# def post_processing_normalization(image):
+#     image = image / (2 ** 8 - 1)
+#     max_value = np.max(image)
+#     min_value = np.min(image)
+#     image = (2 ** 8 - 1) * ((image - min_value) / (max_value - min_value))
+#     return image.astype(np.uint8)
 
 
 if __name__ == "__main__":
@@ -204,6 +216,9 @@ if __name__ == "__main__":
         generated_image = filtering_2d(original_image)
     elif method == 4:
         generated_image = median_filter(original_image)
+
+    # Normalizes matrix
+    # generated_image = post_processing_normalization(generated_image)
 
     # Calculate error and print rounded to 4 decimal places
     print(round(rmse(original_image, generated_image), 4))
