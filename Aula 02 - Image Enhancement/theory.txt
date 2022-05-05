@@ -1,0 +1,78 @@
+IMAGE FORMATION
+Every pixel in an image is determined by an x, y component, witch corresponds to the cartesian plane rotated
+90 degrees clockwise
+
+Pixel and Neighborhood
+- A pixel p at (x, y) has 4 neighbors in horizontal and vertical direcxtions, given by
+    (x+1, y)
+    (x-1, y)
+    (x, y+1)
+    (x, y-1)
+    This set is the 4-neighborhood of p
+
+    - There is also a diahgonal neighborhood, given by diagonal pixels
+    - 8-neighborhood of p is the union of both sets
+
+Intensity Transformation
+- Alter the grey level of an individual pixel
+    Let z be the intensity of an input pixel and T a transformation
+    s = T{z}
+    - s is the pixel value after transformation
+
+    Negative Transformation
+    s = 255 - z
+
+    Contrast Modulation
+    - Changes the amount of contrast in an image
+    - [0, 255] -> [40, 190]
+    - [40, 190] -> [0, 255]
+    s = T{z} = (z-a)(d-c)/(b-a) + c
+
+    Logarithmic Function
+    - Shrinks the dynamic range
+    s = c log(1 + |z|)
+    c = A / log(1 + R)
+        - A is the maximum gray value
+        - R is the larger value in the original image
+
+    Gamma Ajustment
+    - Enhance pixels of higher intensity
+    s = cz^g
+
+    Thresholding
+    - Maps the whole image to two values
+    - Used to create masks
+    s = 0, z > T
+    s = 255, z >= T
+
+    Slicing Gray Levels
+    - Enhances only a specific part of the gray value
+
+
+Histograms
+- Information of frequency of each intensity in the image
+- h(k), k in [0, L-1]
+- Visualized using a bar plot
+
+    Normalized Histogram
+    - Each bin contains a value between 0 and 1, and it corresponds to the percentage of said intensity
+    - Related to probability of selecting a color by randomly chosing a pixel at random
+
+    Cumulative Histogram
+    - For each bin, it shows how many pixels have intensity equal or smaller to said intensity
+
+    Normalized Cumulative Histogram
+    - Combination of both
+
+
+    Histogram Equalization
+    - Produces a non-linear mapping between input and output pixels
+    - T{} uses image as basis
+    - Ds = f(Dz)
+    - The distribution of the output image Ds depends on the distribution of the input image
+
+    - The cumulative histogram can be used as the transfer function
+      s = T(z) = (L-1)/MN hc(z)
+
+
+
