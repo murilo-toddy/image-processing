@@ -1,0 +1,66 @@
+FOURIER TRANSFORM
+Mathematical transformation to obtain information not available directly in the original domain
+Change of basis
+
+A 1D signal is often represented in the time domain in its original form
+Time x Amplitude
+
+For images (2D signal), values are represented in space domain and are mapped to intensity
+
+Fourier Transform
+- Input: Points sampled
+- Output: Coefficients that define said samples
+
+- Analysis: Divide the signal by defining it via simpler partes
+- Synthesis: Reconstruct the signal from its parts
+
+  F(w) = sum_t f(t) e^-jwt
+- Transforms image from space to frequency domain
+
+
+Fourier Series
+- Functions are modeled by sinusoids
+- Every function of a continuous variable t with period T can be represented as
+  f(t) = sum_n a_n cos(2pi n t) + sum_m b_m sin(2 pi n t) = sum_i c_i exp(j 2pi n t / T)
+
+
+DFT
+- Fourier transform for discrete values
+  F(w) = sum_i f(t)e^(-jwt)
+
+  for i = 0 to n-1
+    cn = f(t)e^-jw_it
+    F(wi) = a_wi, b_wi
+
+
+    2D Fourier Transform
+      f(u, v) = 1 / sqrt(mn) sum_x sum_y f(x, y) exp(-j2pi(ux/n + vy/m))
+      f(x, y) = 1 / sqrt(mn) sum_x sum_y F(u, v) exp(j2pi(ux/n + vy/m))
+    - x, y are image coordinates
+    - F(0, 0) is related to the average value of the image
+    - The DFT is invariant to translation in the original image
+    - The DFT is covariant to rotation
+
+    - After the FFTShift, the middle represents lower frequencies, while the edges represent higher freqs
+
+- A convolution in space domain is a product in frequency domain
+  f(x, y) * w(x, y) = invdft F(u, v) W(u, v)
+
+Filters
+    Low Pass Filter
+    - Allow passing of low frequencies, removing higher ones
+
+    High Pass Filter
+    - Allow passing of high frequencies, removing lower ones
+
+    Bandpass Filter
+    - Selects a range of frequencies to be kept
+
+    Bandstop Filter
+    - Remove a range of frequencies
+
+
+Fast Fourier Transform
+- Efficient form to compute DFT
+-  O(n logn)
+
