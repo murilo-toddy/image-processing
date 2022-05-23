@@ -1,0 +1,38 @@
+IMAGE FILTERING
+
+Techniques shown so far only create the output image based on a single pixel or the histogram of the whole image
+
+Spatial Filtering
+- Makes use of a local neighborhood to generate the new image
+  z = T(f(x, y))
+
+    Convolution Operator
+      g(x, y) = f(x, y) * w(x, y) = sum_s sum_t w(s, t) f(x-s, y-t)
+    - w is called a filter / kernel
+    - The output value is a weighted sum of input pixels
+    - This operation depends on the filter size
+
+    Cross Correlation
+      g(x, y) = f(x, y) * w(x, y) = sum_s sum_t w(s, t) f(x+s, y+t)
+    - Differs from the convolution by changing subtraction to sum
+
+        Smoothing
+        - Mean filter
+        - The new pixel is the average of itself and its neighbors
+            - It can be arithmetic or weighted mean
+
+        Gaussian filter
+        - The weight is given by a gaussian curve
+          w(x, y) = 1/2pi sigma² * e^-[x² + y²]/2sigma²
+        - sigma is the variance of the distribution
+        - sigma² is the standard deviation
+
+    Differential Filter
+    - Used to compute transitions on intensities
+    - Related to the derivative of the function
+      df/dx = f(x+1) - f(x)
+      d²f/dx² = f(x+1) - 2f(x) + f(x-1)
+
+
+
+

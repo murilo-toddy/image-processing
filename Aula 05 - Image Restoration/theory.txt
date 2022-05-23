@@ -1,0 +1,157 @@
+IMAGE RESTORATION
+
+Enhancement x Restoration
+    Enhancement
+    - Subjective method based on operations that supposedly improve image quality
+
+    Restoration
+    - Method based on prior knowledge about the image degradation
+
+
+Degradation
+    Blur
+    - Harder to see details about image
+        Motion Blur
+        - Caused my moviment of the object or camera
+
+    Noise
+    - Corruption of the pixels making them inprecise
+
+
+Problem
+  g(x) = N{f(x) * h(x)}
+- g: Observed image
+- f: Ideal image
+- h: Degradation function
+- N: Noise generation process
+    Usually considered to be additive
+    g(x) = f(x) * h(x) + n(x)
+
+    - Each acquisition system has its own h(x)
+
+- The objective is to find a restored image f' that is as similar as possible to f
+
+Sources of Noise
+    Photon Counting
+    - Light detection via a sensor, a statistical process modeled by a poisson distribution
+    - It's estimated that 1/3 of the pixels contain noise
+    - The precision of the pixel is proportional to the intensity
+
+    - A sharper image tends to be noisier
+    - Signal to Noise: Ratio between amounts of noise in a signal
+
+    - The noise is signal dependent
+      g(x) = P{f(x) * h(x)}
+    - As the lambda parameter gets higher, the poisson distribution can be approximated by a normal one
+      P(lambda){} -> N{}
+
+    Thermal
+    - Fluctuation in the amount of photons given by generated electrons
+    - Modeled by a normal distribution N and an additive noise n
+
+        Dark Frame Capture
+        - Takes a black photo to check for points of thermal additive noise
+        - Levels get normalizes and removed when capturing an image
+
+    Quantisation
+    - Caused by reduction of amount of levels
+    - Usually follows a uniform distribuction
+
+    Transmission / Display
+    - Impulsive / Salt and pepper noise
+    - Loss of all the values of the pixel (0 or 255)
+    - A small number of pixels is completly destroyed
+
+
+Noise Generation
+- Uses random number generations and probability functions
+- Knowing something about the noise in the image, it's possible to filter said image
+- It's possible to inspect the histogram of the image in places where its values are known
+
+    Mean Filter
+        Arithmetic
+        - Smooth out pixels
+        - Increases the blur but removes noise
+          f'(x) = 1/mn sum lambda_st g(s, t)
+
+        Geometric
+        - Preserve detils when pixel differences are in multiples
+          f'(x) = PI lambda_st g(s, t) ^ 1/mn
+
+        Harmonic
+        - Removes the amount of outliers
+
+        Statistic Filters
+        - Median / Maximum / Minimum / Mean
+
+            Median
+            - Preserve edges
+
+            Max
+            - Locate dark points
+
+            Min
+            - Locate light points
+
+            Mean
+            - Combines order statistics with mean
+            - Thickens edges
+
+
+    Adaptative Filter
+    - Filter parameters change depending on the position
+    - Flat regions are mantained
+      f'(x) = g(x) - sigman^2 / sigmal^2 (g(x) - mL)
+    sigman: Variance of noise in the whole image
+    sigmal: Local variance of pixels
+    mL:     Local mean of pixels
+
+        Bilateral Filter
+        - Computes a filter for each pixel of the image
+          BF(g) = 1 / F sum_q G_sigmas(p - q) G_sigmar(gp - gq) gq
+        - The filter only considers the image pixels that are related to the image
+
+
+Blur
+- Assumes a noise free scenario
+
+  g(x) = f(x) * h(x)
+- h: Impulse response of the image
+    - How the system when the input is a single point
+        - When we acquire a single dot, what happens to the acquired image?
+    - Point Spread Function (PSF)
+
+    - h is non-negative
+    - The energy of the image is preserved
+      int int h(x, y) dx dy = 1
+
+    No Blur
+    - h = delta
+
+    Uniform Blur
+    - h(x, y, R) = 1/pi R²
+
+    Motion Blur
+    - h(x, y, L, phi) = 1 / L if x, y is in a certain radius and angle
+
+    We want to invert h
+    f'(x) = g(x) * h-1(x)
+
+    - In the frequency domain
+      G(u) = F(u) H(u)
+      F' = G / H
+
+    - In a noisy image
+      F' = F + N / H
+    - If H -> 0, noise dominates
+
+    Pseudo Inverse Filter
+    - Creates a superior threshold for H
+      W = H if H < gamma
+      W = gamma otherwise
+
+
+
+
+
+
