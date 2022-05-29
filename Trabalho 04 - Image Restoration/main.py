@@ -1,12 +1,10 @@
-# Name: Murilo Fantucci Todão
-# NUSP: 11299982
+# Name:   Murilo Fantucci Todão
+# NUSP:   11299982
 # Course: SCC0251
 # Year:   2022
 # Title:  Assignment 4 - Image Restoration
 import numpy as np
 import imageio
-import matplotlib.pyplot as plt
-
 from numpy.fft import fft2, ifft2, fftshift
 
 
@@ -66,8 +64,8 @@ def create_gaussian_degraded_image(image, deg_filter_size, sigma):
 
 
 def apply_constrained_least_squares_filtering(G, H, gamma):
+    # Define laplacian operator and pad to fit size
     laplacian = np.matrix([[0, -1, 0], [-1, 4, -1], [0, -1, 0]])
-
     num_to_pad = int(G.shape[0] // 2 - laplacian.shape[0] // 2)
     laplacian_pad = pad_matrix(laplacian, num_to_pad)
 
@@ -75,7 +73,7 @@ def apply_constrained_least_squares_filtering(G, H, gamma):
     P = fft2(laplacian_pad)
     P_power = np.multiply(P, np.conjugate(P))
 
-    # Calculate H conjugate and the power spectrum of H
+    # Calculate H conjugate and its power spectrum
     H_conj = np.conjugate(H)
     H_power = np.multiply(H, H_conj)
 
@@ -137,11 +135,9 @@ def get_motion_psf(shape, degree_angle: float, num_pixel_dist: int = 20) -> np.n
 
 # Calculate convolution between two images using frequency domain
 def fft_convolve2d(x, y):
-    X = fft2(x)
-    Y = fft2(y)
-    Z = np.multiply(X, Y)
-    z = fftshift(ifft2(Z).real)
-    return np.clip(z, 1e-18, np.max(z))
+    freq_convolution = np.multiply(fft2(x), fft2(y))
+    space_convolution = fftshift(ifft2(freq_convolution).real)
+    return np.clip(space_convolution, 1e-18, np.max(space_convolution))
 
 
 # Apply iterative method to find image coefficients
@@ -172,11 +168,8 @@ def richardson_lucy(image):
 
 # Calculate difference between two images
 def rmse(image1, image2):
-    error = 0
-    for x in range(image1.shape[0]):
-        for y in range(image1.shape[1]):
-            error += (int(image1[x, y].real) - int(image2[x, y].real)) ** 2
-    return np.sqrt(error / image1.shape[0] / image1.shape[1])
+    m, n = image1.shape
+    return np.sqrt(np.sum((image1.real - image2.real) ** 2) / m / n)
 
 
 if __name__ == "__main__":
