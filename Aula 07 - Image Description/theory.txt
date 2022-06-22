@@ -1,0 +1,94 @@
+IMAGE DESCRIPTION
+
+Color and Texture
+    Color Histogram
+        Global Color Histogram
+        - Computes a single histogram for the image, using frequency as descriptor
+
+        Border Interior Classification
+        - Computes two histograms, one for the internal pixels and one for the outer ones
+            - A pixel is internal if all its edges are the same color
+
+
+    Color descriptors
+        Euclidian Distance
+        - d = sqrt(sum(q[i] - p[i])²)
+
+        Log Distance
+        - d = sum |f(q[i]) - f(p[1])|
+            - f = 0 if x = 0
+            - f = 1 if 0 < x < 1
+            - f = ceil(logx + 1)
+
+
+    Texture
+    - Local difference in intensity levels
+        - Difference if the pixel levels
+        - Size of regions to be considered
+        - Direction
+
+    - Pixel by pixel processing is often not a good idea
+
+        Structural Analysis
+        - Decompose image in basic elements
+
+        Statistical Analysis
+        - Characterize textures as series of statistical proprieties in a group of pixels
+
+        - Let z represent indices of pixels in a given window, p(zi), i = 0, ..., L-1 is
+          the frequency intensity zi, in witch p is a normalized histogram
+
+        Uniformity
+        - U(z) = sum(p(zi)²)
+
+        Entropy
+        - e(z) = -sum(p(zi) log(p(zi)))
+
+
+        Co-Ocurence Matrix
+        - Captures relationship between a pair of pixels
+        - The co-ocurence matrix considers a fixed distance Q between two pixels: reference and neighbor
+
+        - Data is stored in a matrix with cols as the value of the pixels and rows as the difference Q
+        - The output matrix is often sparse
+
+            Haralick Descriptors
+            - Calculate the mean and variance of rows and cols in CM
+              mr = sum i sum p_i,j
+              mc = sum j sum p_i,j
+              sigmar^2 = sum(i - mr)^2 sum p_i,j
+              sigmac^2 = sum(i - mc)^2 sum p_i,j
+
+
+            - Maximum probability: Strongest response of the matrix
+              max(p_i,j)
+
+            - Correlation: Between pixels reference and neighbour in range [-1, 1]
+              sum sum (i-mr)(j-mc) p_i,j / sigmar sigmac
+
+            - Contrast
+              sum sum (i - j)^2 p_i,j
+
+            - Energy
+              sum sum p_i,j
+
+
+            Local Binary Patterns
+            - Texture is described by local spation patterns and greylevel contrast
+
+            - Let P, R be the neighbourhood of a pixel with P sampling points and a circle radius R
+            - Produces LBP code for a central pixel c with coordinates (xc, yc)
+              LBP = sum s(gp - gc)2^p
+
+            - A code is said to be uniform if it has low transitions
+
+
+    BAG OF FEATURES
+    - Extract features locally
+    - Quantize or cluster the local features
+    - Learn a vocabulary of visual words
+    - Obtain descriptors as the frequency of visual words in an image
+
+    - Creation of a dictionary containing universal textons (subimages / patterns to be found in images)
+    - Plot of a histogram comparing image with each texton
+

@@ -19,19 +19,16 @@ def create_float_matrix(m, n):
 
 
 # Pad a matrix with certain amount of cols and rows
-def pad_matrix(matrix, nums_to_pad):
-    if nums_to_pad % 2:
+def pad_matrix(matrix, nums_to_pad, odd_padding=True):
+    if odd_padding:
         return np.pad(matrix, (nums_to_pad, nums_to_pad), "constant", constant_values=0)
     else:
         return np.pad(matrix, (nums_to_pad, nums_to_pad + 1), "constant", constant_values=0)
 
 
 def convert_float_uint8(matrix):
-    # Normalize matrix to be between 0 and 1
-    matrix = matrix / np.max(matrix)
-    # Scale to match uint8 format
-    matrix_uint8 = (255 * matrix).astype(np.uint8)
-    return matrix_uint8
+    # Normalize matrix to be between 0 and 1, scale and convert it to uint8 format
+    return (255 * matrix / np.max(matrix)).astype(np.uint8)
 
 
 # Gaussian filter generator as shown in class
@@ -52,11 +49,11 @@ def create_gaussian_degraded_image(image, deg_filter_size, sigma):
     filt = gaussian_filter(deg_filter_size, sigma)
 
     num_to_pad = int(image.shape[0] // 2 - filt.shape[0] // 2)
-    h_pad = pad_matrix(filt, num_to_pad)
+    filt_pad = pad_matrix(filt, num_to_pad, deg_filter_size % 2)
 
     # Apply blur to image in frequency domain
     I = fft2(image)
-    H = fft2(h_pad)
+    H = fft2(filt_pad)
     G = np.multiply(I, H)
 
     # Return filter and degraded image in frequency domain
@@ -77,9 +74,8 @@ def apply_constrained_least_squares_filtering(G, H, gamma):
     H_conj = np.conjugate(H)
     H_power = np.multiply(H, H_conj)
 
-    # Find image approximation using given expression
-    F_hat = np.divide(np.multiply(H_conj, G), (H_power + gamma * P_power + 1e-20))
-    return F_hat
+    # Find image approximation using given expression and return it
+    return np.divide(np.multiply(H_conj, G), (H_power + gamma * P_power + 1e-20))
 
 
 def constrained_least_squares(image):
