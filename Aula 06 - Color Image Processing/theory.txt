@@ -1,0 +1,14 @@
+COLOR IMAGE PROCESSING
+
+Important to identify elements in a scene
+
+Color: Associated with the intensity of light
+Pseudocolor: Colors that are associated with metaphores, a way to represent information
+
+Achromatic Light: Amplitude, without color separation
+Chromatic: Selection of specific wavelengths
+
+
+Color Models
+    Color Space
+    - A space of sources of color that can be combined to generate another color
