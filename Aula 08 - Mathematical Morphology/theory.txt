@@ -1,0 +1,43 @@
+MATHEMATICAL MORPHOLOGY
+
+- Constructed using set theory
+- Objects in an image are defined as sets
+
+    Binary Images
+    - Are defined by a set Z2
+    - Each element of a set is a vector with coordinates (x, y) of pixels
+
+    Grey Level Images
+    - Are defined by a set Z3
+    - Two components are the coordinates, and the third is the intensity
+
+
+    EROSION
+    - Let A and B be sets Z2, the erosion of A by B is
+      A erode B = {z | Bz C A}
+
+
+    OPENING AND CLOSING
+        Opening
+        - Smooth out the contours of the object
+        - Erosion followed by dilation
+
+        Closing
+        - Smooth contours, eliminating small discontinuities
+        - Dilation followed by erosion
+
+    Combinations
+    - Combinations of different operators can be used in different applications
+
+    Hit or Miss
+    - Shape detection using a structing element D
+    - Erosion of A in D
+    - There is the need of local background information W
+      A hom B = A erode B inter comp(A) erode (W - D)
+
+    Edge Detection
+    - Diffence of A and the erosion of A with an element
+
+    Filling
+    - From a point X0 inside the edge
+    - Xk = Xk-1 dilate B inter comp(A)
