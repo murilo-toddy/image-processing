@@ -1,11 +1,12 @@
 import numpy as np
 import imageio
+import matplotlib.pyplot as plt
 
 
 # Convert image to grayscale using luminance method
 def luminance_weights(image):
     matrix = (0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2])
-    return np.clip(matrix, 0, 255).astype(np.uint8)
+    return np.clip(matrix, 0, 255)
 
 
 # Set image values to be binary
@@ -18,43 +19,47 @@ def limiarization(image, treshold):
 # Perform image erosion
 def erode_image(image):
     # Create 3x3 rectangle filled with ones
-    kernel = np.full(shape=(3, 3), fill_value=1)
+    structuring_kernel = np.full(shape=(3, 3), fill_value=1)
 
     # Pad image to account for borders
     image_pad = np.pad(array=image, pad_width=1, mode="edge")
     eroded = np.zeros([image.shape[0], image.shape[1]])
-    for x in range(1, image.shape[0] + 1):
-        for y in range(1, image.shape[1] + 1):
+    for x in range(1, image.shape[0]):
+        for y in range(1, image.shape[1]):
             # Generate submatrix and verify if any element is equal to kernel
-            eroded[x-1, y-1] = np.array(1 if (image_pad[x-1:x+2, y-1:y+2] == kernel).all() 
-                                    else 0)
+            sub_matrix = image_pad[x-1:x+2, y-1:y+2]
+            eroded[x, y] = np.array(1 if (sub_matrix == structuring_kernel).any() else 0)
+
     return eroded
     
 
 # Perform image dilation
 def dilate_image(image):
     # Create 3x3 rectangle filled with ones
-    kernel = np.full(shape=(3, 3), fill_value=1)
+    structuring_kernel = np.full(shape=(3, 3), fill_value=1)
 
     # Pad image to account for borders
     image_pad = np.pad(array=image, pad_width=1, mode="edge")
     dilated = np.zeros([image.shape[0], image.shape[1]])
-    for x in range(1, image.shape[0] + 1):
-        for y in range(1, image.shape[1] + 1):
+    for x in range(1, image.shape[0]):
+        for y in range(1, image.shape[1]):
             # Generate submatrix and verify if all elements are equal to kernel
-            dilated[x-1, y-1] = np.array(1 if (image_pad[x-1:x+2, y-1:y+2] == kernel).any() 
-                                    else 0)
+            sub_matrix = image_pad[x-1:x+2, y-1:y+2]
+            dilated[x, y] = np.array(1 if (sub_matrix == structuring_kernel).all() else 0)
+
     return dilated
 
 
 # Perform opening morphological transformation
 def opening(image):
-    return erode_image(dilate_image(image))
+    dilated = dilate_image(image)
+    return erode_image(dilated)
 
 
 # Perform closing morphological transformation
 def closing(image):
-    return dilate_image(erode_image(image))
+    eroded = erode_image(image)
+    return dilate_image(eroded)
 
 
 # Create masks 1 and 2 using given specification
@@ -71,7 +76,8 @@ def create_co_occurence_matrix(image, q):
     for x in range(1, image.shape[0] - 1):
         for y in range(1, image.shape[1] - 1):
             # Calculate difference between seed and Q and update increment respective cell
-            co_occurence_matrix[image[x, y], image[x + q[0], y + q[1]]] += 1
+            diff = np.abs(int(image[x, y]) - int(image[x + q[0], y + q[1]]))
+            co_occurence_matrix[image[x, y], diff] += 1
     # Return normalized matrix
     return (co_occurence_matrix / np.sum(co_occurence_matrix))
 
@@ -115,7 +121,6 @@ def compute_haralick_descriptors(matrix):
     # Store all descriptors
     descriptors = []
     
-    # Generate intensity matrices
     row = np.zeros([matrix.shape[0], matrix.shape[1]])
     col = np.zeros([matrix.shape[0], matrix.shape[1]])
     for i in range(matrix.shape[0]):
@@ -187,20 +192,48 @@ if __name__ == "__main__":
 
         # Perform morphological operation
         if f_param == 1:
-            transformed_images.append(closing(limiarized_images[-1]))
-        else:
             transformed_images.append(opening(limiarized_images[-1]))
+        else:
+            transformed_images.append(closing(limiarized_images[-1]))
 
         # Calculate masks
         masks = generate_masks(gray_images[-1], transformed_images[-1])
         masks1.append(masks[0])
         masks2.append(masks[1])
 
-        # Calculate all descriptors
-        descriptors.append(get_descriptors(masks1[-1], masks2[-1], q_value))
+        # fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(nrows=1, ncols=6, figsize=(10, 20))
+
+        # ax1.axis("off")
+        # ax1.title.set_text('Original')
+        # ax1.imshow(images[-1])
+
+        # ax2.axis("off")
+        # ax2.title.set_text("Gray")
+        # ax2.imshow(gray_images[-1], cmap="gray")
+
+        # ax3.axis("off")
+        # ax3.title.set_text("Binary")
+        # ax3.imshow(limiarized_images[-1], cmap="gray")
+
+        # ax4.axis("off")
+        # ax4.title.set_text("Morph")
+        # ax4.imshow(transformed_images[-1], cmap="gray")
+
+        # ax5.axis("off")
+        # ax5.title.set_text("Mask1")
+        # ax5.imshow(masks1[-1], cmap="gray")
+        
+        # ax6.axis("off")
+        # ax6.title.set_text("Mask2")
+        # ax6.imshow(masks2[-1], cmap="gray")
+
+        # plt.show()
+
+        descriptors.append(get_descriptors(masks1[-1], masks2[-1], q_value))  # Calculate all descriptors
 
     # Calculate similarities and order images
     similarities = get_ranked_similarities(descriptors[index], descriptors)
+
     order = [x for _, x in sorted(zip(similarities, image_names))]
 
     # Print output

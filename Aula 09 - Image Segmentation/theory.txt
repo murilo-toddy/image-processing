@@ -1,0 +1,89 @@
+IMAGE SEGMENTATION
+
+- Divide the image into parts or regions that are correlated
+- Usually there are semantics involved
+
+Definition
+- Let R be the region occupied by all image
+- Segmentation will partition R into n subregions R1, ..., Rn
+    - URi = R
+    - Ri is connected
+    - Ri inter Rj = empty
+    - There is a criterion Q such that
+        - Q(Ri) = true
+        - Q(Ri U Rj) = false
+          Ri and Rj adjacent
+
+- It's a subjective process
+
+Methods
+    Global Knowledge: Looks for tresholds in intensities
+    Edge-Based: Search for discontinuities
+    Region-Based: Connects pixels that are similar in a neighbourhodd
+    Model-Based: Search for patterns with pre-defined model
+    Connectivity-Based: Via graph or network
+    PDE-Based: Numerical solution for a PDE given some criterion
+
+
+    Tresholding
+    - Separate pixels in regions given their intensity / color
+    - Threshold can be obtained in manual or automatic method
+    - Adaptative thresholding is also possible
+
+        Otsu
+        - Assumes that image has a bi-modal histogram
+        - Computes optimal threshold separating intensities in two classes
+            - Minimizes intra-class variance
+            - Maximizess variance among classes
+
+        - Compute histogram
+        - For each intensity, compute intra-class variance sigma_w^2(i)
+        - Use as threshold intensity T = arg min_i (sigma_w^2(i))
+            - The intraclass variance for a threshold L of an image with M pixels is the weighted sum below
+              sigma_w^2 = W_a sigma_a^2 + W_b sigma_b^2
+              W = 1/M sum h(i)
+              mu = sum(i h(i)) / sum h(i)
+              sigma = sum((i - mu)^2 h(i)) / sum h(i)
+
+
+    Edge Detection
+    - Use as basis the transition of intensities
+    - Search for borders of regions by looking at discontinuities
+    - Application of high-pass filters
+        - Laplacian
+        - Sobel
+        - Prewitt
+    - Application of a treshold to extract edges
+    - Easily degrades with variation and noise
+
+        Laplacian
+        - Isometric filter, can be altered to be directional
+
+        Laplacian of Gaussian
+        - Combination of smoothing with laplacian filter
+
+        Sobel
+        - Gives more weight to central pixels
+
+
+    Region Based Segmentation
+    - Find regions via pixel inspection
+
+        Region Growing
+        - From seed pixels, add pixels that have similar characteristics
+        - Seeds can be set manually of based on filtering operation
+        - Similarity can be achieved via difference or local statistic
+
+
+    Watershed Transformation
+    - Views image as topographic surface: low intensities are valleys and high intensities are hills
+    - Starts by filling the valleys with different "colored water"
+    - When different water meet, some barrier is used to prevent merging
+    - Barriers will represent segmentation
+
+    Hough Transform
+    - Isolate features of a particular shape in an image
+    - Shape must be mathematically described
+
+
+
