@@ -4,106 +4,97 @@ import imageio
 
 # Convert image to grayscale using luminance method
 def luminance_weights(image):
-    matrix = (0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2])
-    return np.clip(matrix, 0, 255).astype(np.uint8)
+    return (0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]).astype(np.uint8)
 
 
 # Set image values to be binary
 def limiarization(image, treshold):
     # Update each cell to be 1 if bigger than treshold and 0 otherwise
-    limiarization_image = np.where(image >= treshold, 1, 0)
+    limiarization_image = np.ones([image.shape[0], image.shape[1]]).astype(np.uint8)
+    limiarization_image[image < treshold] = 0
     return limiarization_image
 
 
 # Perform image erosion
 def erode_image(image):
-    # Create 3x3 rectangle filled with ones
-    kernel = np.full(shape=(3, 3), fill_value=1)
-
-    # Pad image to account for borders
-    image_pad = np.pad(array=image, pad_width=1, mode="edge")
-    eroded = np.zeros([image.shape[0], image.shape[1]])
-    for x in range(1, image.shape[0] + 1):
-        for y in range(1, image.shape[1] + 1):
-            # Generate submatrix and verify if any element is equal to kernel
-            eroded[x-1, y-1] = np.array(1 if (image_pad[x-1:x+2, y-1:y+2] == kernel).all() 
-                                    else 0)
+    eroded = np.zeros([image.shape[0], image.shape[1]]).astype(np.uint8)
+    for x in range(1, image.shape[0]):
+        for y in range(1, image.shape[1]):
+            # Verify if all elements are one
+            if image[x-1:x+2, y-1:y+2].all():
+                eroded[x, y] = 1
     return eroded
     
 
 # Perform image dilation
 def dilate_image(image):
-    # Create 3x3 rectangle filled with ones
-    kernel = np.full(shape=(3, 3), fill_value=1)
-
-    # Pad image to account for borders
-    image_pad = np.pad(array=image, pad_width=1, mode="edge")
-    dilated = np.zeros([image.shape[0], image.shape[1]])
-    for x in range(1, image.shape[0] + 1):
-        for y in range(1, image.shape[1] + 1):
-            # Generate submatrix and verify if all elements are equal to kernel
-            dilated[x-1, y-1] = np.array(1 if (image_pad[x-1:x+2, y-1:y+2] == kernel).any() 
-                                    else 0)
+    dilated = np.zeros([image.shape[0], image.shape[1]]).astype(np.uint8)
+    for x in range(1, image.shape[0]):
+        for y in range(1, image.shape[1]):
+            # Verify if any element is one
+            if image[x-1:x+2, y-1:y+2].any():
+                dilated[x, y] = 1
     return dilated
 
 
 # Perform opening morphological transformation
-def opening(image):
+def closing(image):
     return erode_image(dilate_image(image))
 
 
 # Perform closing morphological transformation
-def closing(image):
+def opening(image):
     return dilate_image(erode_image(image))
 
 
 # Create masks 1 and 2 using given specification
 def generate_masks(grayscale, limiarized):
-    mask1 = grayscale * (1 - limiarized)
-    mask2 = grayscale * limiarized
-    return mask1.astype(np.uint8), mask2.astype(np.uint8)
+    mask1 = grayscale.astype(np.uint8) * (1 - limiarized.astype(np.uint8))
+    mask2 = grayscale.astype(np.uint8) * limiarized.astype(np.uint8)
+    return mask1, mask2
 
 
 # Find co-occurence matrix
 def create_co_occurence_matrix(image, q):
-    image_max = np.max(image)
-    co_occurence_matrix = np.zeros([image_max + 1, image_max + 1], np.uint8)
+    image_max = image.max()
+    co_occurence_matrix = np.zeros([image_max + 1, image_max + 1])
+    dx, dy = q
     for x in range(1, image.shape[0] - 1):
         for y in range(1, image.shape[1] - 1):
             # Calculate difference between seed and Q and update increment respective cell
-            co_occurence_matrix[image[x, y], image[x + q[0], y + q[1]]] += 1
+            co_occurence_matrix[image[x, y], image[x + dx, y + dy]] += 1
     # Return normalized matrix
-    return (co_occurence_matrix / np.sum(co_occurence_matrix))
+    return co_occurence_matrix / co_occurence_matrix.sum()
 
 
 """ Methods to find Halaric Descriptors """
 def auto_correlation(matrix, row, col):
-    return np.sum(row * col * matrix)
+    return (matrix * (row * col)).sum()
 
 
 def contrast(matrix, row, col):
-    return np.sum(np.square(row - col) * matrix)
+    return ((row - col) ** 2 * matrix).sum()
 
 
 def dissimilarity(matrix, row, col):
-    return np.sum(np.abs(row - col) * matrix)
+    return (np.abs(row - col) * matrix).sum()
 
 
 def energy(matrix):
-    return np.sum(np.square(matrix))
+    return (matrix ** 2).sum()
 
 
 def entropy(matrix):
-    matrix = matrix[matrix != 0]
-    return np.sum(-matrix * np.log(matrix))
+    matrix = matrix[matrix > 0]
+    return -(matrix * np.log(matrix)).sum()
 
 
 def homogeneity(matrix, row, col):
-    return np.sum(matrix / (1 + np.square(row - col)))
+    return (matrix / (1 + (row - col) ** 2)).sum()
 
 
 def inverse_difference(matrix, row, col):
-    return np.sum(matrix / (1 + np.abs(row - col)))
+    return (matrix / (1 + np.abs(row - col))).sum()
 
 
 def max_prob(matrix):
@@ -116,12 +107,8 @@ def compute_haralick_descriptors(matrix):
     descriptors = []
     
     # Generate intensity matrices
-    row = np.zeros([matrix.shape[0], matrix.shape[1]])
-    col = np.zeros([matrix.shape[0], matrix.shape[1]])
-    for i in range(matrix.shape[0]):
-        row[i, :] = i
-        col[:, i] = i
-    
+    row, col = np.ogrid[:matrix.shape[0], :matrix.shape[1]]
+
     descriptors.append(auto_correlation(matrix, row, col))
     descriptors.append(contrast(matrix, row, col))
     descriptors.append(dissimilarity(matrix, row, col))
@@ -149,7 +136,7 @@ def get_descriptors(mask1, mask2, q):
 def get_ranked_similarities(query, descriptors):
     distances = []
     for image in descriptors:
-        distances.append(np.sqrt(np.sum(np.square(query - image))))
+        distances.append(((query - image) ** 2).sum() / query.shape[0])
     similarities = distances / np.max(distances)
     return similarities
 
@@ -187,9 +174,9 @@ if __name__ == "__main__":
 
         # Perform morphological operation
         if f_param == 1:
-            transformed_images.append(closing(limiarized_images[-1]))
-        else:
             transformed_images.append(opening(limiarized_images[-1]))
+        else:
+            transformed_images.append(closing(limiarized_images[-1]))
 
         # Calculate masks
         masks = generate_masks(gray_images[-1], transformed_images[-1])
