@@ -49,9 +49,7 @@ def opening(image):
 
 # Create masks 1 and 2 using given specification
 def generate_masks(grayscale, limiarized):
-    mask1 = grayscale.astype(np.uint8) * (1 - limiarized.astype(np.uint8))
-    mask2 = grayscale.astype(np.uint8) * limiarized.astype(np.uint8)
-    return mask1, mask2
+    return grayscale * (1 - limiarized, limiarized)
 
 
 # Find co-occurence matrix
@@ -136,8 +134,8 @@ def get_descriptors(mask1, mask2, q):
 def get_ranked_similarities(query, descriptors):
     distances = []
     for image in descriptors:
-        distances.append(((query - image) ** 2).sum() / query.shape[0])
-    similarities = distances / np.max(distances)
+        distances.append(np.sqrt(((query - image) ** 2).sum()) / query.shape[0])
+    similarities = (1 - distances / np.max(distances))
     return similarities
 
 
@@ -188,7 +186,7 @@ if __name__ == "__main__":
 
     # Calculate similarities and order images
     similarities = get_ranked_similarities(descriptors[index], descriptors)
-    order = [x for _, x in sorted(zip(similarities, image_names))]
+    order = [x for _, x in sorted(zip(1 - similarities, image_names))]
 
     # Print output
     print(f"Query: {query_image_name}")
