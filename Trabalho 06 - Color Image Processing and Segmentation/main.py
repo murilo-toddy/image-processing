@@ -79,6 +79,7 @@ def k_method(number_of_clusters, array, number_of_iters):
 
     return array
 
+
 # Calculate difference between single-color images
 def rmse(image1, image2):
     m, n = image1.shape
@@ -105,16 +106,28 @@ if __name__ == "__main__":
 
     # Open images
     input_image = imageio.imread(input_image_name).astype(np.float32)
+    m, n = input_image.shape[0:2]
     att_space = convert_image_to_att_array(input_image, option)
 
     reference_image = imageio.imread(reference_image_name).astype(np.float32)
 
     # Apply k-method
-    generated_image = k_method(number_of_clusters, att_space, number_of_iters)
+    generated_array = k_method(number_of_clusters, att_space, number_of_iters)
 
-    print(generated_image)
+    if option < 3:
+        if option == 1:
+            features = 3
+        else:
+            features = 5
 
-    # if option < 3:
-    #     print(round(colored_rmse(generated_image, reference_image), 4))
-    # else:
-    #     print(round(rmse(generated_image, reference_image), 4))
+        generated_image = np.reshape(generated_array, (m, n, features))
+        print(round(colored_rmse(generated_image, reference_image), 4))
+    
+    else:
+        if option == 3:
+            features = 1
+        else:
+            features = 3
+
+        generated_image = np.reshape(generated_array, (m, n, features))
+        print(round(rmse(generated_image, reference_image), 4))
