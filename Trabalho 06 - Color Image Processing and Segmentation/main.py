@@ -5,13 +5,12 @@ import random
 
 # Convert RGB image to grayscale using luminance
 def luminance(image):
-    grayscale_image = 0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]
-    return np.clip(grayscale_image.astype(np.uint8), 0, 255)
-
+    return 0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]
+    
 
 # Calculate euclidian distance between two arrays
-def euclidian_distance(m1, m2):
-    return np.abs(m1 - m2)
+def euclidian_distance(cell, centroid):
+    return np.sqrt(np.sum(np.square(cell - centroid)))
 
 
 # Convert image into attributes array
@@ -26,10 +25,9 @@ def convert_image_to_att_array(image, option):
         # Luminance
         return np.reshape(luminance(image), [m * n, 1])
 
-    xy = np.zeros((m, n, 2))
-    for x in range(m):
-        for y in range(n):
-            xy[x, y] = np.array(x, y)
+    x = np.reshape(np.tile(np.reshape(np.arange(m), [m, 1]), (1, n)), [m * n, 1])
+    y = np.reshape(np.tile(np.reshape(np.arange(n), [n, 1]), (m, 1)), [m * n, 1])
+    xy = np.concatenate((x, y), axis=1)
 
     if option == 2:
         # RGB XY
@@ -41,52 +39,53 @@ def convert_image_to_att_array(image, option):
 
 
 # Find closest centroid to a given pixel
-def get_closest_centroid_index(index, centroids):
+def get_closest_centroid_index(array, index, centroids):
     closest_centroid_index = 0
-    min_distance = euclidian_distance(index, centroids[0])
+    min_distance = euclidian_distance(array[index], array[centroids[0]])
     # Calculate the closest centroid and return its index
     for idx, centroid in enumerate(centroids):
-        distance = euclidian_distance(index, centroid)
+        distance = euclidian_distance(array[index], array[centroid])
         if distance < min_distance:
             closest_centroid_index = idx
+            min_distance = distance
     return closest_centroid_index
 
 
 def get_new_centroid(closest_centroid, i):
-    try:
-        middle_index = np.floor(closest_centroid[closest_centroid == i].shape[0] / 2)
-    except:
-        middle_index = 0
-    starting_point = np.where(closest_centroid == i)[0][0]
-    return starting_point + middle_index
+    filtered_centroid = np.zeros([closest_centroid.shape[0], 1])
+    filtered_centroid[closest_centroid == i] = 1
+    array = np.arange(0, closest_centroid.shape[0])
+    
+    return (np.dot(array, filtered_centroid) / np.sum(filtered_centroid))
 
 
 # Apply k-Method in image
 def k_method(number_of_clusters, array, number_of_iters):
     # Initialize centroids
-    size, features = array.shape
-    centroids = np.sort(random.sample(range(0, size), number_of_clusters))
+    size, _ = array.shape
+    centroids = np.sort(random.sample(range(0, size), number_of_clusters)).astype(int)
 
-    closest_centroid = np.zeros(size)
+    closest_centroid = np.zeros(size, int)
     for _ in range(number_of_iters):
         # Find closest centroid for each pixel
         for i in range(size):
-            closest_centroid[i] = get_closest_centroid_index(i, centroids)
+            closest_centroid[i] = get_closest_centroid_index(array, i, centroids)
             
         # Update centroids
         for i in range(number_of_clusters):
             centroids[i] = get_new_centroid(closest_centroid, i)
 
+
     # Update each array value to correspond to closest centroid
     for i in range(len(array)):
-        array[i] = array[int(centroids[int(closest_centroid[i])])]
+        array[i] = array[centroids[closest_centroid[i]]]
 
     return array
 
 
 # Calculate difference between single-color images
 def rmse(image1, image2):
-    m, n = image1.shape
+    m, n = image1.shape[0:2]
     return np.sqrt(np.sum((image1 - image2) ** 2) / m / n)
 
 
