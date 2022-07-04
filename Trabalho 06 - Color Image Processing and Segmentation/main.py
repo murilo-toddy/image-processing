@@ -26,10 +26,11 @@ def convert_image_to_att_array(image, option):
         # Luminance
         return np.reshape(luminance(image), [m * n, 1])
 
-    x = np.reshape(np.title(np.reshape(np.arrange(m), [m, 1]), (1, n)), [m * n, 1])
-    y = np.reshape(np.title(np.reshape(np.arrange(n), [n, 1]), (m, 1)), [m * n, 1])
-    xy = np.concatenate((x, y), axis=1)
-    
+    xy = np.zeros((m, n, 2))
+    for x in range(m):
+        for y in range(n):
+            xy[x, y] = np.array(x, y)
+
     if option == 2:
         # RGB XY
         return np.concatenate((np.reshape(image, [m * n, 3]), xy), axis=1)
@@ -52,7 +53,10 @@ def get_closest_centroid_index(index, centroids):
 
 
 def get_new_centroid(closest_centroid, i):
-    middle_index = np.floor(closest_centroid[closest_centroid == i].shape[0] / 2)
+    try:
+        middle_index = np.floor(closest_centroid[closest_centroid == i].shape[0] / 2)
+    except:
+        middle_index = 0
     starting_point = np.where(closest_centroid == i)[0][0]
     return starting_point + middle_index
 
