@@ -11,46 +11,78 @@ def luminance(image):
 
 # Calculate euclidian distance between two arrays
 def euclidian_distance(m1, m2):
-    return np.sqrt(np.sum(np.square(m1 - m2)))
+    return np.abs(m1 - m2)
+
+
+# Convert image into attributes array
+def convert_image_to_att_array(image, option):
+    m, n = image.shape[0:2]
+
+    if option == 1:
+        # RGB
+        return np.reshape(image, [m * n, 3])
+
+    elif option == 3:
+        # Luminance
+        return np.reshape(luminance(image), [m * n, 1])
+
+    x = np.reshape(np.title(np.reshape(np.arrange(m), [m, 1]), (1, n)), [m * n, 1])
+    y = np.reshape(np.title(np.reshape(np.arrange(n), [n, 1]), (m, 1)), [m * n, 1])
+    xy = np.concatenate((x, y), axis=1)
+    
+    if option == 2:
+        # RGB XY
+        return np.concatenate((np.reshape(image, [m * n, 3]), xy), axis=1)
+
+    if option == 4:
+        # Luminance XY
+        return np.concatenate((np.reshape(luminance(image), [m * n, 1]), xy), axis=1)
 
 
 # Find closest centroid to a given pixel
-def get_closest_centroid_index(coordinate, centroids):
+def get_closest_centroid_index(index, centroids):
     closest_centroid_index = 0
-    min_distance = euclidian_distance(coordinate, centroids[0])
+    min_distance = euclidian_distance(index, centroids[0])
     # Calculate the closest centroid and return its index
-    for index, centroid in enumerate(centroids):
-        distance = euclidian_distance(coordinate, centroid)
+    for idx, centroid in enumerate(centroids):
+        distance = euclidian_distance(index, centroid)
         if distance < min_distance:
-            closest_centroid_index = index
+            closest_centroid_index = idx
     return closest_centroid_index
 
 
+def get_new_centroid(closest_centroid, i):
+    middle_index = np.floor(closest_centroid[closest_centroid == i].shape[0] / 2)
+    starting_point = np.where(closest_centroid == i)[0][0]
+    return starting_point + middle_index
+
+
 # Apply k-Method in image
-def k_method(number_of_clusters, image, option, number_of_iters):
+def k_method(number_of_clusters, array, number_of_iters):
     # Initialize centroids
-    initial_centroids = np.sort(random.sample(range(0, image.shape[0] * image.shape[1]), number_of_clusters))
-    centroids = []
-    for centroid in initial_centroids:
-        centroids.append(np.array([centroid // image.shape[1], centroid % image.shape[1]]))
-    
-    print(centroids)
-    pixels_in_centroid = [[]] * number_of_clusters
+    size, features = array.shape
+    centroids = np.sort(random.sample(range(0, size), number_of_clusters))
+
+    closest_centroid = np.zeros(size)
     for _ in range(number_of_iters):
-        for x in range(image.shape[0]):
-            for y in range(image.shape[1]):
-                coordinate = np.array([x, y])
-                # For each pixel, save its closest centroid
-                pixels_in_centroid[get_closest_centroid_index(coordinate, centroids)].append(np.array([x, y]))
-                
+        # Find closest centroid for each pixel
+        for i in range(size):
+            closest_centroid[i] = get_closest_centroid_index(i, centroids)
+            
+        # Update centroids
+        for i in range(number_of_clusters):
+            centroids[i] = get_new_centroid(closest_centroid, i)
 
-    print(pixels_in_centroid)
+    # Update each array value to correspond to closest centroid
+    for i in range(len(array)):
+        array[i] = array[int(centroids[int(closest_centroid[i])])]
 
+    return array
 
 # Calculate difference between single-color images
 def rmse(image1, image2):
     m, n = image1.shape
-    return np.sqrt(np.sum((int(image1) - int(image2)) ** 2) / m / n)
+    return np.sqrt(np.sum((image1 - image2) ** 2) / m / n)
 
 
 # Calculate difference between colored images
@@ -72,13 +104,17 @@ if __name__ == "__main__":
     random.seed(seed)
 
     # Open images
-    input_image = imageio.imread(input_image_name)
-    reference_image = imageio.imread(reference_image_name)
+    input_image = imageio.imread(input_image_name).astype(np.float32)
+    att_space = convert_image_to_att_array(input_image, option)
+
+    reference_image = imageio.imread(reference_image_name).astype(np.float32)
 
     # Apply k-method
-    generated_image = k_method(number_of_clusters, input_image, option, number_of_iters)
+    generated_image = k_method(number_of_clusters, att_space, number_of_iters)
 
-    if option < 3:
-        print(round(colored_rmse(generated_image, reference_image), 4))
-    else:
-        print(round(rmse(generated_image, reference_image), 4))
+    print(generated_image)
+
+    # if option < 3:
+    #     print(round(colored_rmse(generated_image, reference_image), 4))
+    # else:
+    #     print(round(rmse(generated_image, reference_image), 4))
