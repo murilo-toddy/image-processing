@@ -1,15 +1,26 @@
+# Name:   Murilo Fantucci Todão
+# NUSP:   11299982
+# Course: SCC0251
+# Year:   2022
+# Title:  Assignment 6 - Color Image Processing and Segmentation
+import time
 import numpy as np
-import imageio.v2 as imageio
+import imageio
 import random
 
 import matplotlib.pyplot as plt
-import time
 
 
 # Convert RGB image to grayscale using luminance
 def luminance(image):
     return 0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]
     
+
+def normalize_image(image, resolution=8):
+    image_max = np.max(image)
+    image_min = np.min(image)
+    return ((2 ** resolution - 1) * (image - image_min)) / (image_max - image_min)
+
 
 # Calculate euclidian distance between two arrays
 def euclidian_distance(cell, centroid):
@@ -41,71 +52,27 @@ def convert_image_to_att_array(image, option):
         return np.concatenate((np.reshape(luminance(image), [m * n, 1]), xy), axis=1)
 
 
-# Find closest centroid to a given pixel
-def get_closest_centroid_index(array, index, centroids):
-    closest_centroid_index = 0
-    min_distance = euclidian_distance(array[index], array[centroids[0]])
-    # Calculate the closest centroid and return its index
-    for idx, centroid in enumerate(centroids):
-        distance = euclidian_distance(array[index], array[centroid])
-        if distance < min_distance:
-            closest_centroid_index = idx
-            min_distance = distance
-    return closest_centroid_index
-
-
-def get_new_centroid(array, closest_centroid, i):
-    filtered_centroid = np.zeros([closest_centroid.shape[0], 1])
-    filtered_centroid[closest_centroid == i] = 1
-    return (np.dot(array, filtered_centroid) / np.sum(filtered_centroid))
-
-
-# Apply k-Method in image
-def k_method(number_of_clusters, array, max_iter):
-    # Initialize centroids
-    size, _ = array.shape
-    centroids = np.sort(random.sample(range(0, size), number_of_clusters)).astype(int)
-
-    closest_centroid = np.zeros(size, int)
-    linear_array = np.arange(0, closest_centroid.shape[0])
-    for _ in range(max_iter):
-        # Find closest centroid for each pixel
-        for i in range(size):
-            closest_centroid[i] = get_closest_centroid_index(array, i, centroids)
-            
-        # Update centroids
-        for i in range(number_of_clusters):
-            centroids[i] = get_new_centroid(linear_array, closest_centroid, i)
-
-    # Update each array value to correspond to closest centroid
-    for i in range(len(array)):
-        array[i] = array[centroids[closest_centroid[i]]]
-
-    return array
-
-
-
-
-
-
-
-
-def get_closest_centroid(cell, centroids):
+def get_closest_centroid(array, centroids, cell):
     distances = np.zeros(centroids.shape, np.float32)
     for i, centroid in enumerate(centroids):
-        distances[i] = euclidian_distance(cell, centroid)
+        distances[i] = euclidian_distance(array[cell], array[centroid])
+    return np.argmin(distances)
 
-    return np.where(distances == np.min(distances))[0][0]
+
+def get_closest_centroid_comp(array, centroids, cell):
+    min_distance = np.Infinity
+    for i, centroid in enumerate(centroids):
+        dist = euclidian_distance(array[cell], array[centroid])
+        if dist < min_distance:
+            min_dist_index = i
+            min_distance = dist
+    return min_dist_index
 
 
-def get_new_centroid(linear, closest_centroid, i):
-    if i == 0:
-        closest_centroid[closest_centroid != 0] = 0
-        closest_centroid[closest_centroid == 0] = 1
-    closest_centroid[closest_centroid != i] = 0
-    print(closest_centroid.sum())
-    return np.dot(linear, closest_centroid) / closest_centroid.sum() / i
-
+def update_centroid_value(pixels_in_centroid):
+    pixels_in_centroid = np.array(pixels_in_centroid)
+    return np.sum(pixels_in_centroid, axis=0) / pixels_in_centroid.shape[0]
+    
 
 def new_k(n_clusters, array, n_iters):
     # Generate clusters
@@ -113,13 +80,29 @@ def new_k(n_clusters, array, n_iters):
     centroids = np.sort(random.sample(range(0, size), n_clusters)).astype(int)
 
     closest_centroid = np.zeros(size, int)
-    linear = np.arange(0, closest_centroid.shape[0])
     for _ in range(n_iters):
-        for i in range(len(array)):
-            closest_centroid[i] = get_closest_centroid(array[i], centroids)
-
+        pixels_in_centroid = [[] for _ in range(n_clusters)]
+        t0 = time.time()
+        for i in range(size):
+            # t0 = time.time()
+            # closest_centroid[i] = get_closest_centroid(array, centroids, i)
+            # t2 = time.time()
+            closest_centroid[i] = get_closest_centroid_comp(array, centroids, i)
+            # t1 = time.time()
+            # print(f"iter {t1 - t0}\nfirst {t2 - t0}\nsecond {t1 - t2}")
+            pixels_in_centroid[closest_centroid[i]].append(array[i])
+        
+        t1 = time.time()
         for i, centroid in enumerate(centroids):
-            centroids[i] = get_new_centroid(linear, closest_centroid, i)
+            array[centroid] = update_centroid_value(pixels_in_centroid[i])
+
+        t2 = time.time()
+        print(f"caso 1 {t1 - t0}\ncaso 2 {t2 - t1}")
+
+    for i in range(size):
+        array[i] = array[centroids[closest_centroid[i]]]
+
+    return array
 
 
 # Calculate difference between single-color images
@@ -162,9 +145,9 @@ if __name__ == "__main__":
         else:
             features = 5
 
-        generated_image = np.reshape(generated_array, (m, n, features))
+        generated_image = normalize_image(np.reshape(generated_array, (m, n, features)))
         print(round(colored_rmse(generated_image, reference_image), 4))
-        plt.imshow(generated_image.astype(np.uint8))
+        # plt.imshow(generated_image.astype(np.uint8))
 
     else:
         if option == 3:
@@ -172,8 +155,8 @@ if __name__ == "__main__":
         else:
             features = 3
 
-        generated_image = np.reshape(generated_array, (m, n, features))
+        generated_image = normalize_image(np.reshape(generated_array, (m, n, features)))
         print(round(rmse(generated_image, reference_image), 4))
-        plt.imshow(generated_image.astype(np.uint8), cmap="gray")
+        # plt.imshow(generated_image.astype(np.uint8), cmap="gray")
 
-    plt.show()
+    # plt.show()
