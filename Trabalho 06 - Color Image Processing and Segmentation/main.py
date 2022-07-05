@@ -60,12 +60,15 @@ def get_closest_centroid(array, centroids, cell):
 
 
 def get_closest_centroid_comp(array, centroids, cell):
+    t0 = time.time()
     min_distance = np.Infinity
     for i, centroid in enumerate(centroids):
         dist = euclidian_distance(array[cell], array[centroid])
         if dist < min_distance:
             min_dist_index = i
             min_distance = dist
+    t1 = time.time()
+    print(f"time {t1 - t0}")
     return min_dist_index
 
 
