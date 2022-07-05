@@ -1,6 +1,9 @@
 import numpy as np
-import imageio
+import imageio.v2 as imageio
 import random
+
+import matplotlib.pyplot as plt
+import time
 
 
 # Convert RGB image to grayscale using luminance
@@ -51,36 +54,72 @@ def get_closest_centroid_index(array, index, centroids):
     return closest_centroid_index
 
 
-def get_new_centroid(closest_centroid, i):
+def get_new_centroid(array, closest_centroid, i):
     filtered_centroid = np.zeros([closest_centroid.shape[0], 1])
     filtered_centroid[closest_centroid == i] = 1
-    array = np.arange(0, closest_centroid.shape[0])
-    
     return (np.dot(array, filtered_centroid) / np.sum(filtered_centroid))
 
 
 # Apply k-Method in image
-def k_method(number_of_clusters, array, number_of_iters):
+def k_method(number_of_clusters, array, max_iter):
     # Initialize centroids
     size, _ = array.shape
     centroids = np.sort(random.sample(range(0, size), number_of_clusters)).astype(int)
 
     closest_centroid = np.zeros(size, int)
-    for _ in range(number_of_iters):
+    linear_array = np.arange(0, closest_centroid.shape[0])
+    for _ in range(max_iter):
         # Find closest centroid for each pixel
         for i in range(size):
             closest_centroid[i] = get_closest_centroid_index(array, i, centroids)
             
         # Update centroids
         for i in range(number_of_clusters):
-            centroids[i] = get_new_centroid(closest_centroid, i)
-
+            centroids[i] = get_new_centroid(linear_array, closest_centroid, i)
 
     # Update each array value to correspond to closest centroid
     for i in range(len(array)):
         array[i] = array[centroids[closest_centroid[i]]]
 
     return array
+
+
+
+
+
+
+
+
+def get_closest_centroid(cell, centroids):
+    distances = np.zeros(centroids.shape, np.float32)
+    for i, centroid in enumerate(centroids):
+        distances[i] = euclidian_distance(cell, centroid)
+
+    return np.where(distances == np.min(distances))[0][0]
+
+
+def get_new_centroid(linear, closest_centroid, i):
+    if i == 0:
+        closest_centroid[closest_centroid != 0] = 0
+        closest_centroid[closest_centroid == 0] = 1
+    closest_centroid[closest_centroid != i] = 0
+    print(closest_centroid.sum())
+    return np.dot(linear, closest_centroid) / closest_centroid.sum() / i
+
+
+def new_k(n_clusters, array, n_iters):
+    # Generate clusters
+    size = array.shape[0]
+    centroids = np.sort(random.sample(range(0, size), n_clusters)).astype(int)
+
+    closest_centroid = np.zeros(size, int)
+    linear = np.arange(0, closest_centroid.shape[0])
+    for _ in range(n_iters):
+        for i in range(len(array)):
+            closest_centroid[i] = get_closest_centroid(array[i], centroids)
+
+        for i, centroid in enumerate(centroids):
+            centroids[i] = get_new_centroid(linear, closest_centroid, i)
 
 
 # Calculate difference between single-color images
@@ -115,7 +154,7 @@ if __name__ == "__main__":
     reference_image = imageio.imread(reference_image_name).astype(np.float32)
 
     # Apply k-method
-    generated_array = k_method(number_of_clusters, att_space, number_of_iters)
+    generated_array = new_k(number_of_clusters, att_space, number_of_iters)
 
     if option < 3:
         if option == 1:
@@ -125,7 +164,8 @@ if __name__ == "__main__":
 
         generated_image = np.reshape(generated_array, (m, n, features))
         print(round(colored_rmse(generated_image, reference_image), 4))
-    
+        plt.imshow(generated_image.astype(np.uint8))
+
     else:
         if option == 3:
             features = 1
@@ -134,3 +174,6 @@ if __name__ == "__main__":
 
         generated_image = np.reshape(generated_array, (m, n, features))
         print(round(rmse(generated_image, reference_image), 4))
+        plt.imshow(generated_image.astype(np.uint8), cmap="gray")
+
+    plt.show()
