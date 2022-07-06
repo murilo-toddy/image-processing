@@ -16,15 +16,25 @@ def luminance(image):
     return 0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]
     
 
+def normalize_channel(channel, resolution):
+    channel_min = np.min(channel)
+    channel_max = np.max(channel)
+    return (((2 ** resolution - 1) * (channel - channel_min)) / np.abs(channel_max - channel_min))
+
+
 def normalize_image(image, resolution=8):
-    image_max = np.max(image)
-    image_min = np.min(image)
-    return ((2 ** resolution - 1) * (image - image_min)) / (image_max - image_min)
+    for channel in range(image.shape[2]):
+        image[:, :, channel] = normalize_channel(image[:, :, channel], resolution)
+    return image
 
 
 # Calculate euclidian distance between two arrays
 def euclidian_distance(cell, centroid):
-    return np.sqrt(np.sum(np.square(cell - centroid)))
+    size = cell.shape[0]
+    euclidian_sum = 0
+    for i in range(size):
+        euclidian_sum += pow(cell[i] - centroid[i], 2)
+    return np.sqrt(euclidian_sum)
 
 
 # Convert image into attributes array
@@ -60,15 +70,12 @@ def get_closest_centroid(array, centroids, cell):
 
 
 def get_closest_centroid_comp(array, centroids, cell):
-    t0 = time.time()
     min_distance = np.Infinity
     for i, centroid in enumerate(centroids):
         dist = euclidian_distance(array[cell], array[centroid])
         if dist < min_distance:
             min_dist_index = i
             min_distance = dist
-    t1 = time.time()
-    print(f"time {t1 - t0}")
     return min_dist_index
 
 
@@ -85,25 +92,67 @@ def new_k(n_clusters, array, n_iters):
     closest_centroid = np.zeros(size, int)
     for _ in range(n_iters):
         pixels_in_centroid = [[] for _ in range(n_clusters)]
-        t0 = time.time()
         for i in range(size):
-            # t0 = time.time()
-            # closest_centroid[i] = get_closest_centroid(array, centroids, i)
-            # t2 = time.time()
             closest_centroid[i] = get_closest_centroid_comp(array, centroids, i)
-            # t1 = time.time()
-            # print(f"iter {t1 - t0}\nfirst {t2 - t0}\nsecond {t1 - t2}")
             pixels_in_centroid[closest_centroid[i]].append(array[i])
         
-        t1 = time.time()
         for i, centroid in enumerate(centroids):
             array[centroid] = update_centroid_value(pixels_in_centroid[i])
 
-        t2 = time.time()
-        print(f"caso 1 {t1 - t0}\ncaso 2 {t2 - t1}")
 
     for i in range(size):
         array[i] = array[centroids[closest_centroid[i]]]
+
+    return array
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_closest_cluster(array, index, cluster_values):
+    min_dist = np.Infinity
+    for i, value in enumerate(cluster_values):
+        dist = euclidian_distance(array[index], value)
+        if dist < min_dist:
+            min_dist = dist
+            min_dist_index = i
+    return min_dist_index
+
+
+def k_means(array, n_clusters, n_iters):
+    t0 = time.time()
+    size = array.shape[0]
+    centroids = np.sort(random.sample(range(0, size), n_clusters)).astype(int)
+    cluster_values = np.array([array[centroid] for centroid in centroids])
+    closest_cluster = np.zeros([cluster_values.shape[0], array.shape[1]])
+    pixels_in_cluster = np.zeros(cluster_values.shape[0])
+    closest_cluster_pixels = np.zeros(size, int)
+    for _ in range(n_iters):
+        for i in range(size):
+            closest = get_closest_cluster(array, i, cluster_values)
+            closest_cluster_pixels[i] = closest
+            closest_cluster[closest] += array[i]
+            pixels_in_cluster[closest] += 1
+
+        cluster_values = closest_cluster / pixels_in_cluster[:, None]
+
+    for i in range(size):
+        array[i] = cluster_values[closest_cluster_pixels[i]]
+
+    t1 = time.time()
 
     return array
 
@@ -124,6 +173,7 @@ def colored_rmse(image1, image2):
 
 if __name__ == "__main__":
     # Read user input
+    t0 = time.time()
     input_image_name = input().rstrip()
     reference_image_name = input().rstrip()
     option = int(input())
@@ -140,7 +190,7 @@ if __name__ == "__main__":
     reference_image = imageio.imread(reference_image_name).astype(np.float32)
 
     # Apply k-method
-    generated_array = new_k(number_of_clusters, att_space, number_of_iters)
+    generated_array = k_means(att_space, number_of_clusters, number_of_iters)
 
     if option < 3:
         if option == 1:
@@ -162,4 +212,6 @@ if __name__ == "__main__":
         print(round(rmse(generated_image, reference_image), 4))
         # plt.imshow(generated_image.astype(np.uint8), cmap="gray")
 
+    # t1 = time.time()
+    # print(f"elapsed {t1 - t0}")
     # plt.show()
