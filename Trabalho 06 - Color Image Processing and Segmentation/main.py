@@ -9,16 +9,16 @@ def luminance(image):
 
 
 # Normalize single channel
-def normalize_channel(channel, resolution):
+def normalize_channel(channel):
     ch_min = np.min(channel)
     ch_max = np.max(channel)
-    return ((2 ** resolution - 1) * (channel - ch_min)) / (ch_max - ch_min)
+    return (255 * (channel - ch_min)) / (ch_max - ch_min)
 
 
 # Normalize image with n channels
-def normalize_image(image, resolution=8):
+def normalize_image(image):
     for channel in range(image.shape[2]):
-        image[:, :, channel] = normalize_channel(image[:, :, channel], resolution)
+        image[:, :, channel] = normalize_channel(image[:, :, channel])
     return image
 
 
@@ -26,24 +26,20 @@ def normalize_image(image, resolution=8):
 def convert_image_to_att_array(image, option):
     m, n = image.shape[0:2]
 
-    if option == 1:
-        # RGB
+    if option == 1:   # RGB
         return np.reshape(image, [m * n, 3])
 
-    elif option == 3:
-        # Luminance
+    elif option == 3: # Luminance
         return np.reshape(luminance(image), [m * n, 1])
 
     x = np.reshape(np.tile(np.reshape(np.arange(m), [m, 1]), (1, n)), [m * n, 1])
     y = np.reshape(np.tile(np.reshape(np.arange(n), [n, 1]), (m, 1)), [m * n, 1])
     xy = np.concatenate((x, y), axis=1)
 
-    if option == 2:
-        # RGB XY
+    if option == 2:   # RGB XY
         return np.concatenate((np.reshape(image, [m * n, 3]), xy), axis=1)
 
-    if option == 4:
-        # Luminance XY
+    else:             # Luminance XY
         return np.concatenate((np.reshape(luminance(image), [m * n, 1]), xy), axis=1)
 
 
@@ -76,9 +72,9 @@ def k_means(array, n_clusters, n_iters):
 
     for _ in range(n_iters):
         # Store pixels in given centroid
-        pixels_in_centroid = [[] for _ in range(n_clusters)]
+        pixels_in_centroid = [[] for _ in initial_centroids_index]
         # Accumulate sum of pixel values
-        new_centroids = [np.zeros(array.shape[1]) for _ in range(n_clusters)]
+        new_centroids = [np.zeros(array.shape[1]) for _ in initial_centroids_index]
         for i in range(size):
             # Find closest centroid for each pixel and update new_centroids
             better_cluster_index = get_closest_cluster(array[i], centroids)
@@ -93,8 +89,9 @@ def k_means(array, n_clusters, n_iters):
         centroids = new_centroids
 
     # Update image array
-    for i in range(size):
-        array[i] = centroids[get_closest_cluster(array[i], centroids)]
+    for centroid_index, pixel_indices in enumerate(pixels_in_centroid):
+        for i in pixel_indices:
+            array[i] = centroids[centroid_index]
     
     return array
 
@@ -102,7 +99,7 @@ def k_means(array, n_clusters, n_iters):
 # Single channel RMSE
 def channel_rmse(ch1, ch2):
     m, n = ch1.shape[0:2]
-    return np.sqrt(np.sum((ch1 - ch2) ** 2) / m / n)
+    return np.sqrt(np.square(ch1 - ch2).sum() / m / n)
 
 
 # RGB RMSE
@@ -137,8 +134,7 @@ if __name__ == "__main__":
     # Apply k-means method
     generated_array = k_means(input_image_array, n_clusters, n_iters)
     
-    if option < 3:
-        # RGB image
+    if option < 3:  # RGB image
         if option == 1:
             features = 3
         else:
@@ -148,8 +144,7 @@ if __name__ == "__main__":
         generated_image = normalize_image(np.reshape(generated_array, (m, n, features)))
         print(round(colored_rmse(generated_image, reference_image), 4))
 
-    else:
-        # Grayscale image
+    else:  # Grayscale image
         if option == 3:
             features = 1
         else:
